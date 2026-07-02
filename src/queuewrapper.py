@@ -8,7 +8,7 @@ from pika.exceptions import (
     ConnectionClosedByBroker,
     ConnectionWrongStateError,
 )
-from retry import retry
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential, wait_fixed
 
 from config import settings
 
@@ -178,7 +178,11 @@ class QueueConsumer(QueueWrapper):
         self._channel.queue_declare(queue, durable=False)
         self._channel.basic_qos(prefetch_count=self._prefetch)
 
-    @retry(AMQPConnectionError, delay=1, max_delay=5, jitter=1)
+    @retry(
+        retry=retry_if_exception_type(AMQPConnectionError),
+        wait=wait_exponential(multiplier=1, max=5),
+        reraise=True,
+    )
     def consume_from_queue(self, queue: str, callback: Callable) -> None:
         if self._connection is not None:
             if self._connection.is_open:
@@ -201,7 +205,12 @@ class QueuePublisher(QueueWrapper):
             logger.debug("Opening a new publisher channel.")
             self._channel = self._connection.channel()
 
-    @retry(AMQPConnectionError, tries=3, delay=1)
+    @retry(
+        retry=retry_if_exception_type(AMQPConnectionError),
+        stop=stop_after_attempt(3),
+        wait=wait_fixed(1),
+        reraise=True,
+    )
     def publish_to_queue(self, route: str, payload: dict[str, Any], id: str) -> None:
         if self._connection is None or self._connection.is_closed:
             # Try to reset connection

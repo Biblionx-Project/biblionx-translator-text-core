@@ -1,7 +1,7 @@
 FROM public.ecr.aws/docker/library/ubuntu:24.04 AS build
 
 ARG vlibras_translator_version=1.3.0rc1
-ARG torch_version=2.8.0
+ARG torch_version=2.12.1
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -24,12 +24,12 @@ COPY requirements.txt ./
 RUN pip install --upgrade "setuptools>=69" wheel \
     && pip install -r requirements.txt \
     && pip install \
-        "joblib==1.2.0" \
+        "joblib==1.5.3" \
         "langdetect==1.0.9" \
         "nltk==3.9.4" \
-        "numpy==1.26.0" \
-        "rich==13.5.2" \
-        "spacy==3.7.5" \
+        "numpy==2.5.0" \
+        "rich==15.0.0" \
+        "spacy==3.8.14" \
         "subword-nmt==0.3.8" \
         "torch==${torch_version}" \
         --extra-index-url https://download.pytorch.org/whl/cpu \

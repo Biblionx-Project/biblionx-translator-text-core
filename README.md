@@ -74,7 +74,7 @@ sudo apt-get install -y erlang-base \
 sudo apt-get install rabbitmq-server -y --fix-missing
 ```
 
-##### Python 3.10
+##### Python 3.12
 
 Can be installed using conda.
 Download and run the [miniconda installer](https://docs.conda.io/en/latest/miniconda.html#linux-installers):
@@ -89,9 +89,9 @@ conda init
 
 Relogin to finish the installation.
 
-Create a new environment with python 3.10:
+Create a new environment with python 3.12:
 ```sh
-conda create -n text-core python=3.10
+conda create -n text-core python=3.12
 ```
 
 Then, activate the environment:
@@ -100,22 +100,17 @@ conda activate text-core
 ```
 
 
-##### [Vlibras Translate](https://gitlab.lavid.ufpb.br/vlibras2019/vlibras-library/vlibras-translate)
+##### [VLibras Translator](https://gitlab.lavid.ufpb.br/vlibras2019/vlibras-library/vlibras-translator)
 
 ```sh
-make install
-```
-
-```sh
-python -m pip install --upgrade --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple vlibras-translate==1.3.4rc1 \
-&& python -m pip  install --upgrade --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple vlibras-deeplearning==1.4.1rc1
+python3 -m pip install --upgrade --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple "vlibras-translator[neural]==1.3.0rc1"
 ```
 
 
 ## Development
 
 To run the worker locally, the steps are as follows:
-- Install a modern version of Python (personally, I have developed and tested the server on 3.10);
+- Install a modern version of Python (personally, I have developed and tested the server on 3.12+);
 - Optionally, create and activate a virtualenv:
   ```bash
   $ virtualenv venv && source venv/bin/activate
@@ -123,19 +118,24 @@ To run the worker locally, the steps are as follows:
   # or, if you don't want to install `virtualenv`:
   $ python3 -m venv venv && source venv/bin/activate
   ```
+- Or let the installer create the project virtualenv automatically:
+  ```bash
+  $ bash install.sh
+  ```
 - Install the required dependencies:
   ```bash
-  $ pip install -r requirements.txt
+  $ python3 -m venv .venv && source .venv/bin/activate
+  $ python3 -m pip install -r requirements.txt
   ```
 - Run the worker in debug mode by calling the main source file:
   ```bash
-  $ python src/worker.py
+  $ python3 src/worker.py
   ```
 
 During development, it is also useful to run code-style and linting tools before commiting and/or creating a merge request:
 - Install dev dependencies:
   ```bash
-  $ pip install -r requirements-dev.txt
+  $ python3 -m pip install -r requirements-dev.txt
   ```
 - Enable linter and formatting before commiting:
   ```bash
@@ -177,16 +177,10 @@ sudo sh get-docker.sh
 
 ##### [Docker Compose](https://docs.docker.com/compose/)
 
-Download the current stable release of Docker Compose.
+Modern versions of Docker Engine include the Compose plugin by default. You can verify it is installed by running:
 
 ```sh
-sudo curl -L "https://github.com/docker/compose/releases/download/1.25.3/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-```
-
-Apply executable permissions to the binary.
-
-```sh
-sudo chmod +x /usr/local/bin/docker-compose
+docker compose version
 ```
 
 ### Deploying
@@ -206,7 +200,7 @@ ENABLE_DL_TRANSLATION: "false"
 Finally, deploy the project by running:
 
 ```sh
-sudo docker-compose up
+sudo docker compose up
 ```
 
 ## Contributors

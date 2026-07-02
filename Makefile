@@ -1,5 +1,6 @@
 CURR_DIR	:=	$(shell pwd)
 UTIL_PYCACHE	:=	"$(CURR_DIR)/src/util/__pycache__"
+VENV_PYTHON	:=	$(CURR_DIR)/.venv/bin/python
 
 CORE_CONFIG_FILE	:=	"$(CURR_DIR)/src/config/settings.ini"
 LOGGER_CONFIG_FILE	:=	"$(CURR_DIR)/src/config/logging.ini"
@@ -10,7 +11,7 @@ install:
 start:
 	@CORE_CONFIG_FILE=$(CORE_CONFIG_FILE) \
 	LOGGER_CONFIG_FILE=$(LOGGER_CONFIG_FILE) \
-	python src/worker.py
+	$(if $(wildcard $(VENV_PYTHON)),$(VENV_PYTHON),python3) src/worker.py
 
 dev:
 	@:$(eval CORE_CONFIG_FILE := "$(CURR_DIR)/src/config/settings-dev.ini")
