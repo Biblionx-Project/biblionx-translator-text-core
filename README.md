@@ -1,11 +1,3 @@
-# VLibras Translator (Text Core)
-
-Núcleo del Servicio de Traducción de VLibras.
-
-![Versión](https://img.shields.io/badge/version-v2.4.0-blue.svg)
-![Licencia](https://img.shields.io/badge/license-LGPLv3-blue.svg)
-![VLibras](https://img.shields.io/badge/vlibras%20suite-2024-green.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAUCAYAAAC9BQwsAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA3XAAAN1wFCKJt4AAAAB3RJTUUH4wIHCiw3NwjjIgAAAQ9JREFUOMuNkjErhWEYhq/nOBmkDNLJaFGyyyYsZzIZKJwfcH6AhcFqtCvFDzD5CQaTFINSlJJBZHI6J5flU5/P937fube357m63+d+nqBEagNYA9pAExgABxHxktU3882hjqtd9d7/+lCPsvp DZNA+MAXsABNU6xHYQ912ON2qC2qQ/X+J4XQXEVe/jwawCzwNAZp/NCLiDVgHejXgKIkVdGpm/FXXU/BJDfytbpWBLfWzAjxVx1Kuxwno5k84Jex0IpyzdN46qfYSjq18bzMHzQHXudifgQtgBuhHxGvKbaPg0Klaan7GdqE2W39LOq8OCo6X6kgdeJ4IZKUKWq1Y+GHVjF3gveTIe8BiCvwBEZmRAXuH6mYAAAAASUVORK5CYII=)
-
 ## Tabla de Contenidos
 
 - **[Introducción](#introducción)**
@@ -75,7 +67,7 @@ sudo apt-get install -y erlang-base \
 sudo apt-get install rabbitmq-server -y --fix-missing
 ```
 
-##### Python 3.12
+##### Python 3.12 / 3.13
 
 Se puede instalar usando conda.
 Descargue y ejecute el [instalador de miniconda](https://docs.conda.io/en/latest/miniconda.html#linux-installers):
@@ -90,7 +82,7 @@ conda init
 
 Vuelva a iniciar sesión para finalizar la instalación.
 
-Cree un nuevo entorno con Python 3.12:
+Cree un nuevo entorno con Python 3.12 o 3.13:
 ```sh
 conda create -n text-core python=3.12
 ```
