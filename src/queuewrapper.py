@@ -25,17 +25,17 @@ def initialise_pika_connection(
     retry_delay_in_seconds: float = 5,
     heartbeat: int = 60,
 ) -> pika.BlockingConnection:
-    """Create a Pika `BlockingConnection`.
+    """Crea una `BlockingConnection` de Pika.
     Args:
-        host: Pika host
-        username: username for authentication with Pika host
-        password: password for authentication with Pika host
-        port: port of the Pika host
-        connection_attempts: number of channel attempts before giving up
-        retry_delay_in_seconds: delay in seconds between channel attempts
-        heartbeat: heartbeat delay in seconds
+        host: Host de Pika
+        username: Nombre de usuario para la autenticación con el host de Pika
+        password: Contraseña para la autenticación con el host de Pika
+        port: Puerto del host de Pika
+        connection_attempts: Número de intentos del canal antes de rendirse
+        retry_delay_in_seconds: Retraso en segundos entre intentos del canal
+        heartbeat: Retraso del heartbeat en segundos
     Returns:
-        Pika `BlockingConnection` with provided parameters
+        `BlockingConnection` de Pika con los parámetros proporcionados
     """
 
     import pika
@@ -60,23 +60,23 @@ def _get_pika_parameters(
     retry_delay_in_seconds: float = 5,
     heartbeat: int = 60,
 ) -> pika.ConnectionParameters | pika.URLParameters:
-    """Create Pika `Parameters`.
+    """Crea los parámetros `Parameters` de Pika.
     Args:
-        host: Pika host
-        username: username for authentication with Pika host
-        password: password for authentication with Pika host
-        port: port of the Pika host
-        connection_attempts: number of channel attempts before giving up
-        retry_delay_in_seconds: delay in seconds between channel attempts
-        heartbeat: heartbeat delay in seconds
+        host: Host de Pika
+        username: Nombre de usuario para la autenticación con el host de Pika
+        password: Contraseña para la autenticación con el host de Pika
+        port: Puerto del host de Pika
+        connection_attempts: Número de intentos del canal antes de rendirse
+        retry_delay_in_seconds: Retraso en segundos entre intentos del canal
+        heartbeat: Retraso del heartbeat en segundos
     Returns:
-        Pika `Paramaters` which can be used to create a new connection to a broker.
+        Parámetros `Parameters` de Pika que se pueden usar para crear una nueva conexión a un broker.
     """
 
     import pika
 
     if host.startswith("amqp"):
-        # user supplied a amqp url containing all the info
+        # El usuario proporcionó una URL amqp que contiene toda la información
         parameters = pika.URLParameters(host)
         parameters.connection_attempts = connection_attempts
         parameters.retry_delay = retry_delay_in_seconds
@@ -84,7 +84,7 @@ def _get_pika_parameters(
         if username:
             parameters.credentials = pika.PlainCredentials(username, password)
     else:
-        # host seems to be just the host, so we use our parameters
+        # El host parece ser solo el host, por lo que usamos nuestros parámetros
         parameters = pika.ConnectionParameters(
             host,
             port=port,
@@ -98,27 +98,27 @@ def _get_pika_parameters(
 
 
 def close_pika_channel(channel) -> None:
-    """Attempt to close Pika channel."""
+    """Intenta cerrar el canal Pika."""
 
     try:
         channel.close()
-        logger.debug("Successfully closed Pika channel.")
+        logger.debug("Canal Pika cerrado correctamente.")
     except AMQPError:
-        logger.exception("Failed to close Pika channel.")
+        logger.exception("Error al cerrar el canal Pika.")
 
 
 def close_pika_connection(connection: pika.BlockingConnection) -> None:
-    """Attempt to close Pika connection."""
+    """Intenta cerrar la conexión Pika."""
 
     try:
         connection.close()
-        logger.debug("Successfully closed Pika connection with host.")
+        logger.debug("Conexión Pika con el host cerrada correctamente.")
     except (AMQPError, ConnectionWrongStateError):
-        logger.exception("Failed to close Pika connection with host.")
+        logger.exception("Error al cerrar la conexión Pika con el host.")
 
 
 class QueueWrapper:
-    """A Pika based rabbitmq client."""
+    """Un cliente rabbitmq basado en Pika."""
 
     def __init__(
         self,
@@ -144,14 +144,14 @@ class QueueWrapper:
         try:
             self._port = int(port)
         except ValueError:
-            raise ValueError("Port could not be converted to integer.")
+            raise ValueError("El puerto no se pudo convertir a entero.")
 
         self._connection = None
 
     def _configure_blocking_connection(self):
-        """Initialize RabbitMQ connection"""
+        """Inicializa la conexión de RabbitMQ"""
 
-        logger.debug("Creating a new blocking connection.")
+        logger.debug("Creando una nueva conexión bloqueante.")
         self._connection = initialise_pika_connection(
             host=self._host,
             username=self._username,
@@ -163,7 +163,7 @@ class QueueWrapper:
         )
 
     def close_connection(self):
-        logger.debug("Closing blocking connection.")
+        logger.debug("Cerrando la conexión bloqueante.")
         if self._connection is not None:
             close_pika_connection(self._connection)
 
@@ -202,7 +202,7 @@ class QueuePublisher(QueueWrapper):
 
     def _configure_blocking_channel(self) -> None:
         if self._channel is None or self._channel.is_closed:
-            logger.debug("Opening a new publisher channel.")
+            logger.debug("Abriendo un nuevo canal de publicación.")
             self._channel = self._connection.channel()
 
     @retry(
@@ -213,25 +213,25 @@ class QueuePublisher(QueueWrapper):
     )
     def publish_to_queue(self, route: str, payload: dict[str, Any], id: str) -> None:
         if self._connection is None or self._connection.is_closed:
-            # Try to reset connection
-            logger.debug("Opening a new publisher connection.")
+            # Intentar restablecer la conexión
+            logger.debug("Abriendo una nueva conexión de publicación.")
             self._configure_blocking_connection()
 
-        # If we got an open connection process data event
-        # to ensure the connection is still alive
+        # Si tenemos una conexión abierta, procesamos los eventos de datos
+        # para asegurarnos de que la conexión siga viva
         try:
             self._connection.process_data_events(0)
         except ConnectionClosedByBroker as error:
             logger.debug(
-                f"Connection was closed by broker: {error}. Retrying...")
+                f"El broker cerró la conexión: {error}. Reintentando...")
             self._configure_blocking_connection()
         except AMQPConnectionError as error:
-            logger.debug(f"Connection was closed: {error}. Retrying...")
+            logger.debug(f"La conexión fue cerrada: {error}. Reintentando...")
             self._configure_blocking_connection()
 
         self._configure_blocking_channel()
 
-        logger.debug(f"Publishing message in the route '{route}'.")
+        logger.debug(f"Publicando mensaje en la ruta '{route}'.")
         try:
             self._channel.basic_publish(
                 exchange="",
@@ -241,4 +241,4 @@ class QueuePublisher(QueueWrapper):
             )
 
         except AssertionError:
-            logger.error("Failed to publish message.")
+            logger.error("Error al publicar el mensaje.")

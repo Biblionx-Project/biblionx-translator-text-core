@@ -19,7 +19,7 @@ logger.setLevel(logging.INFO)
 
 
 class Worker:
-    """Main worker"""
+    """Worker principal"""
 
     def __init__(self, translator_queue: str, neural: bool = True):
         """Constructor."""
@@ -39,13 +39,13 @@ class Worker:
 
         try:
             self.version = self.translator.version
-        # For compatibility with older versions of the vlibras_translator
+        # Para compatibilidad con versiones anteriores de vlibras_translator
         except Exception:
             import importlib.metadata
             self.version = importlib.metadata.version("vlibras_translator")
         finally:
             logger.info(
-                f'VLibras translator core uses vlibras_translator v{self.version}')
+                f'El núcleo del traductor VLibras utiliza vlibras_translator v{self.version}')
 
         self.threads = []
 
@@ -55,23 +55,23 @@ class Worker:
         )
 
     def reply_message(self, route, message, id):
-        logger.info("Sending response to request.")
+        logger.info("Enviando respuesta a la solicitud.")
 
         if id is None:
-            logger.error("The request don't have correlation_id.")
+            logger.error("La solicitud no tiene correlation_id.")
 
         if route is None:
-            logger.error("The request don't have reply_to route.")
+            logger.error("La solicitud no tiene la ruta reply_to.")
         else:
             self.publisher.publish_to_queue(route, message, id)
 
     def on_message(self, channel, delivery_tag, properties, body):
-        """Do worker task"""
+        """Realiza la tarea del worker"""
 
-        logger.debug("Processing a new request on a separate thread")
+        logger.debug("Procesando una nueva solicitud en un hilo separado")
 
         try:
-            logger.info("Processing a new translation request.")
+            logger.info("Procesando una nueva solicitud de traducción.")
             payload = json.loads(body)
             gloss = self.translate(payload.get("text", ""))
 
@@ -91,7 +91,7 @@ class Worker:
 
             self.reply_message(
                 route=properties.reply_to,
-                message=json.dumps({"error": "Translator internal error."}),
+                message=json.dumps({"error": "Error interno del traductor."}),
                 id=properties.correlation_id
             )
 
@@ -101,12 +101,12 @@ class Worker:
 
     def process_message(self, channel, method, properties, body):
         """
-        The task potentially takes a long time to finish. So, we run
-        the task in a separate thread making sure the RabbitMQ I/O
-        loop is not blocked.
+        La tarea potencialmente toma mucho tiempo para finalizar. Por lo tanto, ejecutamos
+        la tarea en un hilo separado asegurándonos de que el bucle I/O
+        de RabbitMQ no se bloquee.
         """
 
-        # Clean up the list of threads, so it doesn't keep appending
+        # Limpiar la lista de hilos para que no siga acumulando
         for t in self.threads:
             if not t.is_alive():
                 t.handled = True
@@ -121,8 +121,8 @@ class Worker:
         self.threads.append(thread)
 
     def start(self):
-        """Start message queue consumer"""
-        logger.debug("Starting queue consumer")
+        """Inicia el consumidor de la cola de mensajes"""
+        logger.debug("Iniciando el consumidor de la cola")
         self.consumer.consume_from_queue(
             self.translator_queue,
             self.process_message,
@@ -135,14 +135,14 @@ class Worker:
         self.consumer.close_connection()
 
     def exit_gracefully(self, signum, frame):
-        """Stop consuming queue but finish current messages."""
+        """Detiene el consumo de la cola pero finaliza los mensajes actuales."""
         self.consumer.stop_consuming()
 
     def stop(self):
-        """Stop message queue consumers."""
-        logger.debug("Stopping queue consumer")
+        """Detiene los consumidores de la cola de mensajes."""
+        logger.debug("Deteniendo el consumidor de la cola")
         self.consumer.close_connection()
-        logger.debug("Stopping queue publisher")
+        logger.debug("Deteniendo el publicador de la cola")
         self.publisher.close_connection()
 
 
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     worker = None
 
     try:
-        logger.info("Trying to create translation worker")
+        logger.info("Intentando crear el worker de traducción")
 
         run_healthcheck_thread(settings.HEALTHCHECK_PORT)
 
@@ -162,15 +162,15 @@ if __name__ == "__main__":
             neural=settings.ENABLE_DL_TRANSLATION
         )
 
-        logger.info("Starting translation worker")
+        logger.info("Iniciando el worker de traducción")
 
         signal(SIGTERM, worker.exit_gracefully)
         worker.start()
 
     except KeyboardInterrupt:
-        logger.error("KeyboardInterrupt: stopping translation worker")
+        logger.error("KeyboardInterrupt: deteniendo el worker de traducción")
     except Exception:
-        logger.exception("Unexpected error has occured in translation worker")
+        logger.exception("Ha ocurrido un error inesperado en el worker de traducción")
     finally:
         if worker:
             worker.stop()

@@ -1,8 +1,8 @@
 apiVersion: v2
 name: tradcore
-description: Módulo de Tradução por IA do Vlibras.
+description: Módulo de traducción por IA de VLibras.
 maintainers:
-  - name: Ministério da Gestão e Inovação em Serviços Públicos
+  - name: Ministerio de la Gestión e Innovación en Servicios Públicos
     email: sgd@gestao.gov.br
 type: application
 version: 0.1.1

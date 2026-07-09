@@ -18,12 +18,12 @@ class HealthcheckHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(b"OK")
 
     def log_message(self, format, *args):
-        logger.debug("Healthcheck from %s %s" %
+        logger.debug("Healthcheck desde %s %s" %
                      (self.address_string(), format % args))
 
 
 def _create_healthcheck_Server(port):
-    logger.debug(f"Starting healthcheck server on port {port}.")
+    logger.debug(f"Iniciando el servidor de healthcheck en el puerto {port}.")
     server = http.server.HTTPServer(('', port), HealthcheckHTTPRequestHandler)
     server.serve_forever()
 
