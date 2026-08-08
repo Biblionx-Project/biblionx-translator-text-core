@@ -12,17 +12,17 @@ variables:
 
 
 include:
-  # 🔹 Plantilla estándar para ramas dev
+  # 🔹 Standard template for dev branches
   - project: 'vlibras2019/DevOps'
     ref: main
     file: '/Default-App-Pipeline-VLibras.gitlab-ci.yml'
 
-# Sobrescrevendo o bloco "artifacts" do job container-build herdado
+# Overriding the inherited container-build job's "artifacts" block
 container-build:
   artifacts:
     name: "${CI_JOB_NAME}-${CI_COMMIT_SHORT_SHA}"
     reports:
       dotenv: build*.env
     paths:
-      - build*.env  # ❌ eliminando oci-export*/ para pruebas
+      - build*.env  # ❌ removing oci-export*/ for testing
     expire_in: 1 hour

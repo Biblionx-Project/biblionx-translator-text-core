@@ -7,9 +7,9 @@ def handle_exception(ex):
 
     try:
         if isinstance(ex, JSONDecodeError):
-            logger.exception("Se recibió una solicitud de traducción no válida.")
+            logger.exception("Received an invalid translation request.")
         else:
-            logger.exception("Ocurrió una excepción inesperada.")
+            logger.exception("An unexpected exception occurred.")
 
     except TypeError:
-        logger.exception("Ocurrió un error al manejar una excepción.")
+        logger.exception("An error occurred while handling an exception.")

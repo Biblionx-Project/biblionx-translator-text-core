@@ -1,76 +1,76 @@
-## Tabla de Contenidos
+## Table of Contents
 
-- **[Introducción](#introducción)**
-  - [Requisitos del Sistema](#requisitos-del-sistema)
-  - [Prerrequisitos](#prerrequisitos)
-  - [Instalación](#instalación)
-- **[Desarrollo](#desarrollo)**
-- **[Despliegue](#despliegue)**
-  - [Herramientas de Despliegue](#herramientas-de-despliegue)
-  - [Desplegando](#desplegando)
-- **[Colaboradores](#colaboradores)**
-- **[Licencia](#licencia)**
+- **[Introduction](#introduction)**
+  - [System Requirements](#system-requirements)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- **[Development](#development)**
+- **[Deployment](#deployment)**
+  - [Deployment Tools](#deployment-tools)
+  - [Deploying](#deploying)
+- **[Contributors](#contributors)**
+- **[License](#license)**
 
 
-## Introducción
+## Introduction
 
-Estas instrucciones le permitirán obtener una copia del proyecto en funcionamiento en su máquina local para fines de desarrollo y pruebas. Consulte la sección de despliegue para conocer cómo desplegar el proyecto en un sistema en producción.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See the deployment section for notes on how to deploy the project to a production system.
 
-### Requisitos del Sistema
+### System Requirements
 
-* SO: Ubuntu 22.04 LTS (Jammy Jellyfish)
+* OS: Ubuntu 22.04 LTS (Jammy Jellyfish)
 
-### Prerrequisitos
+### Prerequisites
 
-Antes de iniciar la instalación, es necesario instalar algunos prerrequisitos:
+Before starting the installation, a few prerequisites need to be installed:
 
 ##### [RabbitMQ](https://www.rabbitmq.com/)
 
-Siga el [script de inicio rápido](https://www.rabbitmq.com/install-debian.html#apt-quick-start-cloudsmith) de RabbitMQ:
+Follow RabbitMQ's [quick start script](https://www.rabbitmq.com/install-debian.html#apt-quick-start-cloudsmith):
 
 ```sh
 #!/bin/sh
 
 sudo apt-get install curl gnupg apt-transport-https -y
 
-## Clave de firma principal de RabbitMQ
+## RabbitMQ main signing key
 curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/com.rabbitmq.team.gpg > /dev/null
-## Espejo comunitario de Cloudsmith: repositorio Erlang moderno
+## Cloudsmith community mirror: modern Erlang repository
 curl -1sLf https://ppa1.novemberain.com/gpg.E495BB49CC4BBE5B.key | sudo gpg --dearmor | sudo tee /usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg > /dev/null
-## Espejo comunitario de Cloudsmith: repositorio RabbitMQ
+## Cloudsmith community mirror: RabbitMQ repository
 curl -1sLf https://ppa1.novemberain.com/gpg.9F4587F226208342.key | sudo gpg --dearmor | sudo tee /usr/share/keyrings/rabbitmq.9F4587F226208342.gpg > /dev/null
 
-## Agregar repositorios apt mantenidos por el equipo de RabbitMQ
+## Add apt repositories maintained by the RabbitMQ team
 sudo tee /etc/apt/sources.list.d/rabbitmq.list <<EOF
-## Proporciona lanzamientos modernos de Erlang/OTP
+## Provides modern Erlang/OTP releases
 ##
 deb [signed-by=/usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-erlang/deb/ubuntu jammy main
 deb-src [signed-by=/usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-erlang/deb/ubuntu jammy main
 
-## Proporciona RabbitMQ
+## Provides RabbitMQ
 ##
 deb [signed-by=/usr/share/keyrings/rabbitmq.9F4587F226208342.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-server/deb/ubuntu jammy main
 deb-src [signed-by=/usr/share/keyrings/rabbitmq.9F4587F226208342.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-server/deb/ubuntu jammy main
 EOF
 
-## Actualizar índices de paquetes
+## Update package indexes
 sudo apt-get update -y
 
-## Instalar paquetes de Erlang
+## Install Erlang packages
 sudo apt-get install -y erlang-base \
                         erlang-asn1 erlang-crypto erlang-eldap erlang-ftp erlang-inets \
                         erlang-mnesia erlang-os-mon erlang-parsetools erlang-public-key \
                         erlang-runtime-tools erlang-snmp erlang-ssl \
                         erlang-syntax-tools erlang-tftp erlang-tools erlang-xmerl
 
-## Instalar rabbitmq-server y sus dependencias
+## Install rabbitmq-server and its dependencies
 sudo apt-get install rabbitmq-server -y --fix-missing
 ```
 
 ##### Python 3.12 / 3.13
 
-Se puede instalar usando conda.
-Descargue y ejecute el [instalador de miniconda](https://docs.conda.io/en/latest/miniconda.html#linux-installers):
+Can be installed using conda.
+Download and run the [miniconda installer](https://docs.conda.io/en/latest/miniconda.html#linux-installers):
 ```sh
 mkdir -p ~/miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
@@ -80,14 +80,14 @@ source ~/miniconda3/bin/activate
 conda init
 ```
 
-Vuelva a iniciar sesión para finalizar la instalación.
+Log back in to finish the installation.
 
-Cree un nuevo entorno con Python 3.12 o 3.13:
+Create a new environment with Python 3.12 or 3.13:
 ```sh
 conda create -n text-core python=3.12
 ```
 
-Luego, active el entorno:
+Then activate the environment:
 ```sh
 conda activate text-core
 ```
@@ -95,72 +95,72 @@ conda activate text-core
 
 ##### [VLibras Translator](https://gitlab.lavid.ufpb.br/vlibras2019/vlibras-library/vlibras-translator)
 
-Instale el traductor de VLibras con soporte neuronal (versión 1.3.0rc1):
+Install the VLibras translator with neural support (version 1.3.0rc1):
 ```sh
 python3 -m pip install --upgrade --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple "vlibras-translator[neural]==1.3.0rc1"
 ```
 
 
-## Desarrollo
+## Development
 
-Para ejecutar el worker localmente, los pasos son los siguientes:
-- Instalar una versión moderna de Python (el servidor ha sido desarrollado y probado en Python 3.12+);
-- Opcionalmente, cree y active un entorno virtual (`virtualenv` o `venv`):
+To run the worker locally, follow these steps:
+- Install a modern version of Python (the server was developed and tested on Python 3.12+);
+- Optionally, create and activate a virtual environment (`virtualenv` or `venv`):
   ```bash
   $ virtualenv venv && source venv/bin/activate
 
-  # o, si no desea instalar `virtualenv`:
+  # or, if you don't want to install `virtualenv`:
   $ python3 -m venv venv && source venv/bin/activate
   ```
-- O deje que el instalador cree el entorno virtual del proyecto automáticamente:
+- Or let the installer create the project's virtual environment automatically:
   ```bash
   $ bash install.sh
   ```
-- Instalar las dependencias requeridas (actualizadas a sus versiones modernas: `pika 1.4.1`, `tenacity 9.1.4`, `pydantic 2.13.4`, `pydantic-settings 2.14.2`, etc.):
+- Install the required dependencies (updated to their modern versions: `pika 1.4.1`, `tenacity 9.1.4`, `pydantic 2.13.4`, `pydantic-settings 2.14.2`, etc.):
   ```bash
   $ python3 -m venv .venv && source .venv/bin/activate
   $ python3 -m pip install -r requirements.txt
   ```
-- Ejecutar el worker en modo depuración (debug) llamando al archivo fuente principal:
+- Run the worker in debug mode by calling the main source file:
   ```bash
   $ python3 src/worker.py
   ```
 
-Durante el desarrollo, también es útil ejecutar herramientas de estilo de código y linter antes de hacer commits y/o crear merge requests:
-- Instalar las dependencias de desarrollo (`flake8 7.3.0`, `pre-commit 4.6.0`):
+During development, it's also useful to run code style and linter tools before committing and/or opening merge requests:
+- Install the development dependencies (`flake8 7.3.0`, `pre-commit 4.6.0`):
   ```bash
   $ python3 -m pip install -r requirements-dev.txt
   ```
-- Habilitar el formateo y linter antes de realizar commits:
+- Enable formatting and linting before commits:
   ```bash
   $ pre-commit install
   ```
 
-### Instalación
+### Installation
 
-Después de instalar todos los prerrequisitos, inicie el núcleo de traducción (Translation Core) con el siguiente comando:
+After installing all the prerequisites, start the Translation Core with the following command:
 
 ```sh
 make dev start
 ```
 
-## Despliegue
+## Deployment
 
-Estas instrucciones le permitirán poner en marcha una copia del proyecto en un sistema en producción.
+These instructions will get a copy of the project running on a production system.
 
-### Herramientas de Despliegue
+### Deployment Tools
 
-Para desplegar completamente este proyecto es necesario tener instalado y configurado Docker Engine y Docker Compose.
+To fully deploy this project you need Docker Engine and Docker Compose installed and configured.
 
 ##### [Docker](https://www.docker.com/)
 
-Descargue el script get-docker:
+Download the get-docker script:
 
 ```sh
 curl -fsSL https://get.docker.com -o get-docker.sh
 ```
 
-Instale la última versión de Docker:
+Install the latest version of Docker:
 
 ```sh
 sudo sh get-docker.sh
@@ -168,15 +168,15 @@ sudo sh get-docker.sh
 
 ##### [Docker Compose](https://docs.docker.com/compose/)
 
-Las versiones modernas de Docker Engine incluyen el plugin de Compose por defecto. Puede verificar que está instalado ejecutando:
+Modern versions of Docker Engine include the Compose plugin by default. You can verify it's installed by running:
 
 ```sh
 docker compose version
 ```
 
-### Desplegando
+### Deploying
 
-Antes de desplegar el proyecto, verifique el archivo [docker-compose.yml](docker-compose.yml) y revise las siguientes variables de entorno:
+Before deploying the project, check the [docker-compose.yml](docker-compose.yml) file and review the following environment variables:
 
 ```yml
 AMQP_HOST: rabbitmq
@@ -188,18 +188,18 @@ TRANSLATOR_QUEUE: "translate.to_text"
 ENABLE_DL_TRANSLATION: "false"
 ```
 
-Finalmente, despliegue el proyecto ejecutando:
+Finally, deploy the project by running:
 
 ```sh
 sudo docker compose up
 ```
 
-## Colaboradores
+## Contributors
 
 * Jonathan Brilhante - <jonathan.brilhante@lavid.ufpb.br>
 * Wesnydy Ribeiro - <wesnydy@lavid.ufpb.br>
 * Diego Silva - <diego.silva@lavid.ufpb.br>
 
-## Licencia
+## License
 
-Este proyecto está bajo la Licencia LGPLv3 - consulte el archivo [LICENSE](LICENSE) para más detalles.
+This project is licensed under LGPLv3 - see the [LICENSE](LICENSE) file for details.

@@ -60,6 +60,6 @@ COPY --from=build /opt/venv /opt/venv
 COPY --from=build /usr/local/share/nltk_data /usr/local/share/nltk_data
 COPY ./src /dist/
 
-RUN vlibras-translator -n "Esta traducción forzará la descarga de archivos externos adicionales." || true
+RUN vlibras-translator -n "This translation will force the download of additional external files." || true
 
 CMD ["python", "worker.py"]

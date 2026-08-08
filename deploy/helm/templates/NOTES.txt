@@ -1,49 +1,49 @@
 ###############################################################
-# Notas sobre la implantación de la aplicación
+# Notes on deploying the application
 ###############################################################
 
-1. Información de la Aplicación:
+1. Application information:
 
-   El Translator-Core se refiere al módulo de traducción de portugués a glosas (Libras) basado en IA. 
-   Para el pleno funcionamiento del traductor, asegúrese de que la API de traducción esté configurada y pueda comunicarse con el core.
-   Esta comunicación se realiza a través de colas asíncronas (AMQP), caché de peticiones (Redis) y base de datos SQL (Postgres).
-   Las variables asociadas a estos servicios deben tener los mismos valores para ambos servicios.
+   Translator-Core refers to the AI-based Portuguese-to-glosses (Libras) translation module.
+   For the translator to work fully, make sure the translation API is configured and able to communicate with the core.
+   This communication happens via async queues (AMQP), a request cache (Redis), and a SQL database (Postgres).
+   The variables associated with these services must have matching values on both services.
 
-   - Nombre de la aplicación: {{ .Chart.Name }}
-   - Versión: {{ .Chart.Version }}
-   - Nombre de la release: {{ .Release.Name }}
+   - Application name: {{ .Chart.Name }}
+   - Version: {{ .Chart.Version }}
+   - Release name: {{ .Release.Name }}
    - Namespace: {{ .Release.Namespace }}
 
-2. Cómo acceder a la aplicación:
+2. How to access the application:
    {{- if eq $.Values.tradcore.service.type "LoadBalancer" }}
-   - La aplicación está expuesta a través de LoadBalancer:
-     (Puede tomar algunos minutos para que se aprovisione la IP del LoadBalancer. Use el siguiente comando para verificar la IP:
+   - The application is exposed via LoadBalancer:
+     (It may take a few minutes for the LoadBalancer IP to be provisioned. Use the following command to check the IP:
      kubectl get svc --namespace {{ .Release.Namespace }} -o wide)
   {{- else if eq .Values.tradcore.service.type "NodePort" }}
-   - La aplicación está expuesta a través de NodePort:
+   - The application is exposed via NodePort:
      NodePort: {{ .Values.tradcore.service.nodePort }}
-     Use la IP de cualquier nodo del clúster con el NodePort para acceder a la aplicación:
+     Use the IP of any cluster node with the NodePort to access the application:
      URL: http://<Node-IP>:{{ .Values.tradcore.service.nodePort }}
    {{- else }}
-   - La aplicación está expuesta a través de ClusterIP:
+   - The application is exposed via ClusterIP:
      URL: http://<Cluster-IP>:{{ .Values.tradcore.service.port }}
-     (Accesible solo desde dentro del clúster)
+     (Only accessible from within the cluster)
    {{- end }}
 
-3. Visualizando logs:
-   Para visualizar los logs de la API, ejecute:
+3. Viewing logs:
+   To view the API logs, run:
    kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
 
-4. Escalando la aplicación:
-   Para escalar la aplicación, ejecute:
-   kubectl scale deployment {{ include "tradcore.name" . }} --replicas=<cantidad-deseada> -n {{ .Release.Namespace }}
+4. Scaling the application:
+   To scale the application, run:
+   kubectl scale deployment {{ include "tradcore.name" . }} --replicas=<desired-count> -n {{ .Release.Namespace }}
 
-5. Resolución de problemas:
-   - En caso de que la aplicación no inicie, verifique los logs de los pods:
+5. Troubleshooting:
+   - If the application doesn't start, check the pod logs:
      kubectl logs -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
-   - Verifique los endpoints de los servicios:
+   - Check the service endpoints:
      kubectl get svc -n {{ .Release.Namespace }}
 
-6. Eliminación:
-   Para eliminar esta release, ejecute:
+6. Uninstalling:
+   To remove this release, run:
    helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}
