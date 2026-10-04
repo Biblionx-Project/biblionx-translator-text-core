@@ -7,8 +7,8 @@ services:
     environment:
       AMQP_HOST: rabbitmq
       AMQP_PORT: 5672
-      AMQP_USER: vlibras
-      AMQP_PASS: vlibras
+      AMQP_USER: ${AMQP_USER:-guest}
+      AMQP_PASS: ${AMQP_PASS:-guest}
       AMQP_PREFETCH_COUNT: 1
       TRANSLATOR_QUEUE: "translate.to_text"
       ENABLE_DL_TRANSLATION: "true"
@@ -26,8 +26,8 @@ services:
       - 5673:5672
       - 15673:15672
     environment:
-      RABBITMQ_DEFAULT_USER: vlibras
-      RABBITMQ_DEFAULT_PASS: vlibras
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-guest}
 
 networks:
   rabbitmq-net:

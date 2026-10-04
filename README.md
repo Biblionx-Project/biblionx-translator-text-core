@@ -202,9 +202,7 @@ sudo docker compose up
 
 ## Contributors
 
-* Jonathan Brilhante - <jonathan.brilhante@lavid.ufpb.br>
-* Wesnydy Ribeiro - <wesnydy@lavid.ufpb.br>
-* Diego Silva - <diego.silva@lavid.ufpb.br>
+Originally developed by the Biblionx team.
 
 ## License
 

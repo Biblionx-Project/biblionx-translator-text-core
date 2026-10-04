@@ -2,8 +2,7 @@ apiVersion: v2
 name: tradcore
 description: VLibras AI translation module.
 maintainers:
-  - name: Ministry of Management and Innovation in Public Services (Brazil)
-    email: sgd@gestao.gov.br
+  - name: Biblionx Team
 type: application
 version: 0.1.1
 appVersion: "1.16.1"
