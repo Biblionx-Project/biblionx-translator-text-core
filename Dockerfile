@@ -29,7 +29,7 @@ RUN pip install --upgrade "setuptools>=69" wheel \
         "nltk==3.9.4" \
         "numpy==2.5.0" \
         "rich==15.0.0" \
-        "spacy==3.8.14" \
+        "spacy==3.8.16" \
         "subword-nmt==0.3.8" \
         "torch==${torch_version}" \
         --extra-index-url https://download.pytorch.org/whl/cpu \
@@ -41,6 +41,11 @@ RUN pip install --upgrade "setuptools>=69" wheel \
     && python3 -c "import os, pathlib, urllib.request, zipfile; root = pathlib.Path(os.environ['NLTK_DATA']) / 'corpora'; root.mkdir(parents=True, exist_ok=True); archive = root / 'wordnet.zip'; urllib.request.urlretrieve(os.environ['NLTK_WORDNET_URL'], archive); zipfile.ZipFile(archive).extractall(root)"
 
 FROM public.ecr.aws/docker/library/ubuntu:24.04
+
+LABEL maintainer="Biblionx Team" \
+      org.opencontainers.image.title="Biblionx Translator Text Core" \
+      org.opencontainers.image.description="Biblionx Translation Core Worker service" \
+      org.opencontainers.image.vendor="Biblionx"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

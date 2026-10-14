@@ -1,14 +1,15 @@
 apiVersion: v2
-name: tradcore
-description: VLibras AI translation module.
+name: biblionx-translator-text-core
+description: Biblionx AI translation core module (adapted from VLibras architecture).
 maintainers:
   - name: Biblionx Team
 type: application
 version: 0.1.1
 appVersion: "1.16.1"
 keywords:
+  - biblionx
+  - lsrd
   - vlibras
   - backend
-  - nodejs
-  - redis
+  - python
   - rabbitmq

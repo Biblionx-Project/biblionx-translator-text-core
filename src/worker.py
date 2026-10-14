@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 import threading
 
 from vlibras_translator import translate
@@ -45,7 +46,7 @@ class Worker:
             self.version = importlib.metadata.version("vlibras_translator")
         finally:
             logger.info(
-                f'VLibras translator core is using vlibras_translator v{self.version}')
+                f'Biblionx translator core is using vlibras_translator v{self.version}')
 
         self.threads = []
 
@@ -136,7 +137,10 @@ class Worker:
 
     def exit_gracefully(self, signum, frame):
         """Stops consuming the queue but finishes current messages."""
-        self.consumer.stop_consuming()
+        if hasattr(self.consumer, 'stop_consuming'):
+            self.consumer.stop_consuming()
+        elif hasattr(self.consumer, '_channel') and self.consumer._channel:
+            self.consumer._channel.stop_consuming()
 
     def stop(self):
         """Stops the message queue consumers."""
@@ -174,4 +178,4 @@ if __name__ == "__main__":
     finally:
         if worker:
             worker.stop()
-            SystemExit(1)
+        sys.exit(1)

@@ -185,25 +185,28 @@ docker compose version
 Before deploying the project, check the [docker-compose.yml](docker-compose.yml) file and review the following environment variables:
 
 ```yml
-AMQP_HOST: rabbitmq
-AMQP_PORT: 5672
-AMQP_USER: vlibras
-AMQP_PASS: vlibras
-AMQP_PREFETCH_COUNT: 1
-TRANSLATOR_QUEUE: "translate.to_text"
-ENABLE_DL_TRANSLATION: "false"
+BIBLIONX_AMQP_HOST: rabbitmq
+BIBLIONX_AMQP_PORT: 5672
+BIBLIONX_AMQP_USER: guest
+BIBLIONX_AMQP_PASS: guest
+BIBLIONX_AMQP_PREFETCH_COUNT: 1
+BIBLIONX_TRANSLATOR_QUEUE: "translate.to_text"
+BIBLIONX_ENABLE_DL_TRANSLATION: "true"
+BIBLIONX_HEALTHCHECK_PORT: 80
 ```
 
 Finally, deploy the project by running:
 
 ```sh
-sudo docker compose up
+docker compose up -d
+# or via Makefile
+make docker-up
 ```
 
-## Contributors
+## Contributors & Attribution
 
-Originally developed by the Biblionx team.
+Originally developed by the VLibras team (Laboratório de Aplicações de Vídeo Digital - LAVID / UFPB and Brazilian Ministry of Planning/Management). Adapted, modernized, and maintained as an architectural reference for Dominican Sign Language (LSRD) text processing by the Biblionx team (UNICDA thesis project).
 
 ## License
 
-This project is licensed under LGPLv3 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under LGPLv3 - see the [LICENSE](LICENSE) file for details. Derived from the open-source VLibras project, maintaining full compliance with the GNU Lesser General Public License v3.0.
