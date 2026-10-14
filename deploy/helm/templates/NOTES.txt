@@ -4,7 +4,7 @@
 
 1. Application information:
 
-   Translator-Core refers to the AI-based Portuguese-to-glosses (Libras) translation module.
+   Biblionx Translator Core is the AI-based text-to-gloss module that translates written Spanish into LSRD (Dominican Sign Language) glosses.
    For the translator to work fully, make sure the translation API is configured and able to communicate with the core.
    This communication happens via async queues (AMQP), a request cache (Redis), and a SQL database (Postgres).
    The variables associated with these services must have matching values on both services.

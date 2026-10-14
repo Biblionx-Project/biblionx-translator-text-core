@@ -1,4 +1,4 @@
-## Provide a name in place of kube-prometheus-stack for `app:` labels
+## Provide a name in place of the chart name for `app:` labels
 nameOverride: ""
 
 ## Provide a name to substitute for the full names of resources
@@ -7,11 +7,12 @@ fullnameOverride: ""
 ## Labels to apply to all resources
 commonLabels: {}
 
-imagePullSecrets:
-  - name: registrynuvem
+## Secrets used to pull the container image from a private registry
+imagePullSecrets: []
+  # - name: biblionx-registry
 
 global:  
-  appName: tradutor-core
+  appName: biblionx-translator
   ## Reference to one or more secrets to be used when pulling images
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
   ##
@@ -27,21 +28,21 @@ global:
   # helping to maintain consistency and reduce redundancy.
   redis:
     # usePassword: true
-    # password: "changevlibrasme"
+    # password: "changeme"
     # cachename: "changemeName"
     # host: "changeme"
     # port: 6379
   amqp:
     # port: 5672
-    # username: vlibras
-    # password: vlibraschangeme
+    # username: biblionx
+    # password: biblionxchangeme
     # host: "changeme"
   
 
 tradcore:
   replicaCount: 6
   image:
-    repository: "registry.sisp.gov.br/vlibras/vlibras-translator-service/vlibras-translator-text-core"
+    repository: "biblionx/translator-text-core"
     tag: ""
   
   pullPolicy: Always
@@ -53,20 +54,21 @@ tradcore:
     AMQP_PREFETCH_COUNT: 1
     LOGGER_CONFIG_FILE: "/dist/config/logging-dev.ini"
     HEALTHCHECK_PORT: '8080'
+    # Env var names below are kept unchanged for compatibility with the upstream translation engine (vlibras-translator package).
     VLIBRAS_DL_MODEL_TAG: "v1.3.0"
     VLIBRAS_FORCE_MODEL_DOWNLOAD: 'true'
 
 
   secrets:
     # The existingSecret field is more like a boolean. 
-    # if it's empty, Wikilibras Backend creates a secret based on Enviroment Variables Values
-    # if it's NOT empty, Wikilibras doesn't create a secret and try to use the existingSecret.
-    existingSecret: "vlibras-tradutor-core-appsecret"
+    # if it's empty, this chart creates a secret based on the appSecret values below
+    # if it's NOT empty, the chart doesn't create a secret and uses the existingSecret instead.
+    existingSecret: "biblionx-translator-core-appsecret"
     
     appSecret:
       ENABLE_DL_TRANSLATION : 'true'
       GIT_SSL_NO_VERIFY: '1'
-      TRANSLATOR_QUEUE: "translate.to_text4"
+      TRANSLATOR_QUEUE: "translate.to_text"
       VIDEOMAKER_QUEUE: "translate.to_video"
 
   service:
@@ -76,7 +78,7 @@ tradcore:
   #httpRelativePath: /
   ## Configure extra options for containers' liveness, readiness and startup probes
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#configure-probes
-  ## @param livenessProbe.enabled Enable livenessProbe on Keycloak containers
+  ## @param livenessProbe.enabled Enable livenessProbe on translator core containers
   ## @param livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
   ## @param livenessProbe.periodSeconds Period seconds for livenessProbe
   ## @param livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
@@ -90,7 +92,7 @@ tradcore:
     timeoutSeconds: 5
     failureThreshold: 3
     successThreshold: 1
-  ## @param readinessProbe.enabled Enable readinessProbe on Keycloak containers
+  ## @param readinessProbe.enabled Enable readinessProbe on translator core containers
   ## @param readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
   ## @param readinessProbe.periodSeconds Period seconds for readinessProbe
   ## @param readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
@@ -105,7 +107,7 @@ tradcore:
     failureThreshold: 3
     successThreshold: 1
   ## When enabling this, make sure to set initialDelaySeconds to 0 for livenessProbe and readinessProbe
-  ## @param startupProbe.enabled Enable startupProbe on Keycloak containers
+  ## @param startupProbe.enabled Enable startupProbe on translator core containers
   ## @param startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
   ## @param startupProbe.periodSeconds Period seconds for startupProbe
   ## @param startupProbe.timeoutSeconds Timeout seconds for startupProbe
@@ -134,25 +136,25 @@ tradcore:
   tolerations: []
   affinity: {}
 
-# This section enables the internal PostgreSQL instance provided by the Helm chart.
+# Default connection settings for the internal RabbitMQ and Redis services.
 
 rabbitmqha:
   enabled: true
   port: 5672
-  rabbitmqUsername: vlibras
-  rabbitmqPassword: vlibraschangeme
-  existingSecrets: "vlibrastradutor-rabbitmq-credentials"
+  rabbitmqUsername: biblionx
+  rabbitmqPassword: biblionxchangeme
+  existingSecrets: "biblionx-translator-rabbitmq-credentials"
 
 redis:
   enabled: true
   usePassword: true
-  password: "changevlibrasme"
+  password: "changeme"
   cachename: "changemeName"
   redisPort: 6379
-  existingSecrets: "vlibrastradutor-redis-credentials"
+  existingSecrets: "biblionx-translator-redis-credentials"
 
-# Enable the use of an external services like PostgreSQL.
-# Note: If this is set to 'true', the internal PostgreSQL instance (above) will not be created.
+# Connection settings for external services (RabbitMQ and Redis).
+# Values set here take precedence over the global and internal defaults above.
 externalServices:
   tradcore:
     amqp:
@@ -160,15 +162,15 @@ externalServices:
       port: 5672
       username: "trad_usr_amqp"
       password: "changeme"
-      host: "rabitmqp.example.com"
-      existingSecrets: "vlibrastradutor-rabbitmq-credentials"
+      host: "rabbitmq.example.com"
+      existingSecrets: "biblionx-translator-rabbitmq-credentials"
       #existingClaim: ""
     redis:
       enabled: true
       usePassword: true
-      password: "changevlibrasme"
+      password: "changeme"
       cachename: "changemeName"
       redisPort: 6379
       host: "redis.example.com"
-      existingSecrets: "vlibrastradutor-redis-credentials"
+      existingSecrets: "biblionx-translator-redis-credentials"
       #existingClaim: ""

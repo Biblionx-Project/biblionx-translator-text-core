@@ -47,7 +47,7 @@
 {{- end -}}
 
 {{/*
-Define the name of the PostgreSQL secret to use.
+Define the name of the AMQP secret to use.
 */}}
 {{- define "tradcoreGetAmqpSecretName" -}}
 {{- if and .Values.global .Values.global.amqp .Values.global.amqp.existingSecrets (not .Values.externalServices.tradcore.amqp.existingSecrets) }}

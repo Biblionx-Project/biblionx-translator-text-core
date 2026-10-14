@@ -1,9 +1,9 @@
 {{/* vim: set filetype=mustache: */}}
 
 {{/*
-Expand the name of the chart.
+Application (product) name used for the app.kubernetes.io/part-of label.
 */}}
-{{- define "vlibras.name" -}}
+{{- define "biblionx.name" -}}
 {{- default .Chart.Name .Values.global.appName | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -40,7 +40,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/version: "{{ replace "+" "_" .Chart.Version }}"
-app.kubernetes.io/part-of: {{ template "vlibras.name" . }}
+app.kubernetes.io/part-of: {{ template "biblionx.name" . }}
 chart: {{ template "tradcore.chartref" . }}
 release: {{ $.Release.Name | quote }}
 heritage: {{ $.Release.Service | quote }}

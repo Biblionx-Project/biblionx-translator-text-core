@@ -1,188 +1,148 @@
 # Biblionx Translator Text Core
 
-*Adapted from [VLibras](https://www.vlibras.gov.br/) Translator Text Core.*
+Text translation core worker for **Biblionx**, a UNICDA thesis project (Trabajo de Grado) that translates
+written Spanish (Dominican Republic) into **Dominican Sign Language (LSRD, Lengua de Señas Dominicana)**.
 
-> **Note — Biblionx-Project:** this repository is an adaptation of [VLibras](https://www.vlibras.gov.br/) kept as an architecture reference for the Biblionx thesis project (Dominican Sign Language, LSRD, text translator). The project's active, functional component is [`biblionx-lsrd-translator`](https://github.com/Biblionx-Project/biblionx-lsrd-translator); this repo is kept as a historical reference of the original VLibras ecosystem, not as an active dependency of the final product. See the [Biblionx-Project](https://github.com/Biblionx-Project) organization.
+> **Architecture reference component.** The active Biblionx product is
+> [`biblionx-lsrd-translator`](https://github.com/Biblionx-Project/biblionx-lsrd-translator). This repository
+> documents the text translation core of the Biblionx reference architecture and is not a runtime dependency
+> of the final product. See the [Biblionx-Project](https://github.com/Biblionx-Project) organization.
 
 ## Table of Contents
 
-- **[Introduction](#introduction)**
-  - [System Requirements](#system-requirements)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- **[Development](#development)**
-- **[Deployment](#deployment)**
-  - [Deployment Tools](#deployment-tools)
-  - [Deploying](#deploying)
-- **[Contributors](#contributors)**
-- **[License](#license)**
+- [Architecture Role](#architecture-role)
+- [Message Contract](#message-contract)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Running Locally](#running-locally)
+- [Configuration](#configuration)
+- [Deployment with Docker](#deployment-with-docker)
+- [Kubernetes (Helm)](#kubernetes-helm)
+- [Development Tools](#development-tools)
+- [Origins](#origins)
 
+## Architecture Role
 
-## Introduction
+The text core is a stateless RabbitMQ worker. It sits behind the translation REST API
+(`biblionx-translator-api`): the API publishes translation requests to a queue, the worker turns the input
+text into a sign-language gloss, and replies on the queue named by the request's `reply_to` property.
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See the deployment section for notes on how to deploy the project to a production system.
+| File | Purpose |
+| --- | --- |
+| [`src/worker.py`](src/worker.py) | Entry point. Consumes the translator queue, translates each message in its own thread and publishes the reply. |
+| [`src/queuewrapper.py`](src/queuewrapper.py) | Pika-based consumer/publisher with connection retries (`tenacity`). |
+| [`src/config.py`](src/config.py) | `pydantic-settings` configuration loaded from environment variables and `.env`. |
+| [`src/healthcheck.py`](src/healthcheck.py) | Minimal HTTP server that answers `200 OK` to any `GET` request. |
+| [`src/exceptionhandler.py`](src/exceptionhandler.py) | Logs invalid requests and unexpected errors. |
 
-### System Requirements
+The gloss itself is produced by the external Python package `vlibras-translator` (imported as
+`vlibras_translator`, version `1.3.0rc1`, installed with the `neural` extra from TestPyPI). The worker
+reports the package version in every reply.
 
-* OS: Ubuntu 22.04 LTS (Jammy Jellyfish)
+## Message Contract
 
-### Prerequisites
+**Request** (consumed from `TRANSLATOR_QUEUE`, default `translate.to_text`; the queue is declared non-durable):
 
-Before starting the installation, a few prerequisites need to be installed:
+- Body: JSON, e.g. `{"text": "Hola, ¿cómo estás?"}`
+- Properties: `reply_to` (reply queue) and `correlation_id` (copied to the reply)
 
-##### [RabbitMQ](https://www.rabbitmq.com/)
+**Reply** (published to the default exchange with routing key `reply_to`):
 
-Follow RabbitMQ's [quick start script](https://www.rabbitmq.com/install-debian.html#apt-quick-start-cloudsmith):
-
-```sh
-#!/bin/sh
-
-sudo apt-get install curl gnupg apt-transport-https -y
-
-## RabbitMQ main signing key
-curl -1sLf "https://keys.openpgp.org/vks/v1/by-fingerprint/0A9AF2115F4687BD29803A206B73A36E6026DFCA" | sudo gpg --dearmor | sudo tee /usr/share/keyrings/com.rabbitmq.team.gpg > /dev/null
-## Cloudsmith community mirror: modern Erlang repository
-curl -1sLf https://ppa1.novemberain.com/gpg.E495BB49CC4BBE5B.key | sudo gpg --dearmor | sudo tee /usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg > /dev/null
-## Cloudsmith community mirror: RabbitMQ repository
-curl -1sLf https://ppa1.novemberain.com/gpg.9F4587F226208342.key | sudo gpg --dearmor | sudo tee /usr/share/keyrings/rabbitmq.9F4587F226208342.gpg > /dev/null
-
-## Add apt repositories maintained by the RabbitMQ team
-sudo tee /etc/apt/sources.list.d/rabbitmq.list <<EOF
-## Provides modern Erlang/OTP releases
-##
-deb [signed-by=/usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-erlang/deb/ubuntu jammy main
-deb-src [signed-by=/usr/share/keyrings/rabbitmq.E495BB49CC4BBE5B.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-erlang/deb/ubuntu jammy main
-
-## Provides RabbitMQ
-##
-deb [signed-by=/usr/share/keyrings/rabbitmq.9F4587F226208342.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-server/deb/ubuntu jammy main
-deb-src [signed-by=/usr/share/keyrings/rabbitmq.9F4587F226208342.gpg] https://ppa1.novemberain.com/rabbitmq/rabbitmq-server/deb/ubuntu jammy main
-EOF
-
-## Update package indexes
-sudo apt-get update -y
-
-## Install Erlang packages
-sudo apt-get install -y erlang-base \
-                        erlang-asn1 erlang-crypto erlang-eldap erlang-ftp erlang-inets \
-                        erlang-mnesia erlang-os-mon erlang-parsetools erlang-public-key \
-                        erlang-runtime-tools erlang-snmp erlang-ssl \
-                        erlang-syntax-tools erlang-tftp erlang-tools erlang-xmerl
-
-## Install rabbitmq-server and its dependencies
-sudo apt-get install rabbitmq-server -y --fix-missing
+```json
+{"translation": "<gloss>", "version": "<translator package version>"}
 ```
 
-##### Python 3.12 / 3.13
+On any failure the worker replies with `{"error": "Internal translator error."}`. Every message is
+acknowledged after processing, whether it succeeded or not.
 
-Can be installed using conda.
-Download and run the [miniconda installer](https://docs.conda.io/en/latest/miniconda.html#linux-installers):
-```sh
-mkdir -p ~/miniconda3
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
-bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
-rm -rf ~/miniconda3/miniconda.sh
-source ~/miniconda3/bin/activate
-conda init
-```
+## Requirements
 
-Log back in to finish the installation.
-
-Create a new environment with Python 3.12 or 3.13:
-```sh
-conda create -n text-core python=3.12
-```
-
-Then activate the environment:
-```sh
-conda activate text-core
-```
-
-
-##### [VLibras Translator](https://gitlab.lavid.ufpb.br/vlibras2019/vlibras-library/vlibras-translator)
-
-Install the VLibras translator with neural support (version 1.3.0rc1):
-```sh
-python3 -m pip install --upgrade --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple "vlibras-translator[neural]==1.3.0rc1"
-```
-
-
-## Development
-
-To run the worker locally, follow these steps:
-- Install a modern version of Python (the server was developed and tested on Python 3.12+);
-- Optionally, create and activate a virtual environment (`virtualenv` or `venv`):
-  ```bash
-  $ virtualenv venv && source venv/bin/activate
-
-  # or, if you don't want to install `virtualenv`:
-  $ python3 -m venv venv && source venv/bin/activate
+- Linux (Ubuntu 22.04 or 24.04; the Docker image is built on Ubuntu 24.04)
+- Python 3.12 or 3.13
+- A reachable [RabbitMQ](https://www.rabbitmq.com/) broker. The quickest way to get one locally is the
+  service defined in [`docker-compose.yml`](docker-compose.yml):
+  ```sh
+  docker compose up -d rabbitmq   # AMQP on localhost:5673, management UI on localhost:15673
   ```
-- Or let the installer create the project's virtual environment automatically:
-  ```bash
-  $ bash install.sh
-  ```
-- Install the required dependencies (updated to their modern versions: `pika 1.4.1`, `tenacity 9.1.4`, `pydantic 2.13.4`, `pydantic-settings 2.14.2`, etc.):
-  ```bash
-  $ python3 -m venv .venv && source .venv/bin/activate
-  $ python3 -m pip install -r requirements.txt
-  ```
-- Run the worker in debug mode by calling the main source file:
-  ```bash
-  $ python3 src/worker.py
-  ```
+  Alternatively, install `rabbitmq-server` by following the
+  [official Debian/Ubuntu guide](https://www.rabbitmq.com/docs/install-debian).
 
-During development, it's also useful to run code style and linter tools before committing and/or opening merge requests:
-- Install the development dependencies (`flake8 7.3.0`, `pre-commit 4.6.0`):
-  ```bash
-  $ python3 -m pip install -r requirements-dev.txt
-  ```
-- Enable formatting and linting before commits:
-  ```bash
-  $ pre-commit install
-  ```
+## Installation
 
-### Installation
+### Option 1: installer script
 
-After installing all the prerequisites, start the Translation Core with the following command:
+[`install.sh`](install.sh) installs the system packages (`build-essential default-jre libhunspell-dev git-lfs`,
+via `sudo apt`), creates a `.venv` virtual environment, installs [`requirements.txt`](requirements.txt) and the
+translator package:
 
 ```sh
-make dev start
+bash install.sh   # or: make install
 ```
 
-## Deployment
-
-These instructions will get a copy of the project running on a production system.
-
-### Deployment Tools
-
-To fully deploy this project you need Docker Engine and Docker Compose installed and configured.
-
-##### [Docker](https://www.docker.com/)
-
-Download the get-docker script:
+### Option 2: manual
 
 ```sh
-curl -fsSL https://get.docker.com -o get-docker.sh
+python3 -m venv .venv && source .venv/bin/activate
+python3 -m pip install --upgrade pip setuptools wheel
+python3 -m pip install -r requirements.txt
+python3 -m pip install \
+    --index-url https://test.pypi.org/simple/ \
+    --extra-index-url https://pypi.org/simple \
+    "vlibras-translator[neural]==1.3.0rc1"
 ```
 
-Install the latest version of Docker:
+`requirements.txt` pins the worker's own dependencies: `pika 1.4.1`, `tenacity 9.1.4`, `pydantic 2.13.4`,
+`pydantic-settings 2.14.2` and `python-dotenv 1.2.2`. The [`Dockerfile`](Dockerfile) additionally pins the
+translator's runtime stack (`torch 2.5.1` CPU, `spacy 3.8.16`, `nltk 3.9.4`, `numpy`, `subword-nmt`, etc.),
+downloads the spaCy model and the NLTK WordNet corpus, and runs the translator once at build time so its
+model files are fetched ahead of the first request.
 
-```sh
-sudo sh get-docker.sh
-```
+## Running Locally
 
-##### [Docker Compose](https://docs.docker.com/compose/)
+1. Copy the example configuration and adjust it (see [Configuration](#configuration)):
+   ```sh
+   cp .env.example .env
+   ```
+   If you use the Compose RabbitMQ service, set `AMQP_PORT=5673`.
+2. Start the worker:
+   ```sh
+   make start              # uses .venv/bin/python if present, otherwise python3
+   # or
+   python3 src/worker.py
+   ```
 
-Modern versions of Docker Engine include the Compose plugin by default. You can verify it's installed by running:
+Note that `.env` is read from the current working directory, so run the worker from the repository root.
+The health check listens on `HEALTHCHECK_PORT` (default `80`); binding a port below 1024 requires root, so
+set e.g. `HEALTHCHECK_PORT=8080` when running as a regular user.
 
-```sh
-docker compose version
-```
+## Configuration
 
-### Deploying
+Settings are defined in [`src/config.py`](src/config.py) and read from environment variables or a `.env`
+file (names are case-sensitive). Every setting can also be given with a `BIBLIONX_` prefix
+(e.g. `BIBLIONX_AMQP_HOST`); the unprefixed name takes precedence when both are set.
 
-Before deploying the project, check the [docker-compose.yml](docker-compose.yml) file and review the following environment variables:
+| Variable | Default | Description |
+| --- | --- | --- |
+| `MODE` | `DEVELOPMENT` | One of `DEVELOPMENT`, `PRODUCTION`, `HOMOLOG`, `TESTING`. |
+| `ENABLE_DL_TRANSLATION` | `True` | Use the neural (deep learning) translation mode. |
+| `TRANSLATOR_QUEUE` | `translate.to_text` | Queue the worker consumes. |
+| `HEALTHCHECK_PORT` | `80` | Port of the HTTP health check. |
+| `AMQP_HOST` | `localhost` | RabbitMQ host, or a full `amqp://` URL. |
+| `AMQP_PORT` | `5672` | RabbitMQ port. |
+| `AMQP_USER` | `guest` | RabbitMQ user. |
+| `AMQP_PASS` | `guest` | RabbitMQ password. |
+| `AMQP_PREFETCH_COUNT` | `1` | Consumer prefetch count. |
+| `AMQP_HEART_BEAT` | `60` | Connection heartbeat in seconds. |
+| `AMQP_URI` | built from the values above | Optional explicit AMQP URI. |
+
+See [`.env.example`](.env.example) for a complete template.
+
+## Deployment with Docker
+
+Requires Docker Engine with the Compose plugin (`docker compose version`).
+
+[`docker-compose.yml`](docker-compose.yml) builds the worker image and starts it together with a RabbitMQ
+broker on a shared network. Review its environment block before deploying:
 
 ```yml
 BIBLIONX_AMQP_HOST: rabbitmq
@@ -195,18 +155,33 @@ BIBLIONX_ENABLE_DL_TRANSLATION: "true"
 BIBLIONX_HEALTHCHECK_PORT: 80
 ```
 
-Finally, deploy the project by running:
+Credentials can be overridden through the `AMQP_USER`/`AMQP_PASS` (worker) and
+`RABBITMQ_DEFAULT_USER`/`RABBITMQ_DEFAULT_PASS` (broker) environment variables. Then run:
 
 ```sh
-docker compose up -d
-# or via Makefile
-make docker-up
+docker compose up -d      # or: make docker-up
+docker compose down       # or: make docker-down
 ```
 
-## Contributors & Attribution
+To build the image on its own: `make docker-build`.
 
-Originally developed by the VLibras team (Laboratório de Aplicações de Vídeo Digital - LAVID / UFPB and Brazilian Ministry of Planning/Management). Adapted, modernized, and maintained as an architectural reference for Dominican Sign Language (LSRD) text processing by the Biblionx team (UNICDA thesis project).
+## Kubernetes (Helm)
 
-## License
+A Helm chart is available in [`deploy/helm`](deploy/helm). Review [`values.yaml`](deploy/helm/values.yaml)
+before installing: the image repository, pull secrets, existing secret names and broker/cache credentials are
+placeholders that must be replaced for your cluster.
 
-This project is licensed under LGPLv3 - see the [LICENSE](LICENSE) file for details. Derived from the open-source VLibras project, maintaining full compliance with the GNU Lesser General Public License v3.0.
+## Development Tools
+
+```sh
+python3 -m pip install -r requirements-dev.txt   # flake8 7.3.0, pre-commit 4.6.0
+pre-commit install
+```
+
+The hooks in [`.pre-commit-config.yaml`](.pre-commit-config.yaml) run pyupgrade, autopep8, flake8 and isort
+before each commit. `make clean` removes cached bytecode.
+
+## Origins
+
+This project was initially forked from the open-source VLibras project. It has since evolved enough to stand
+as an independent project of its own. Licensed under LGPLv3 — see [LICENSE](LICENSE).

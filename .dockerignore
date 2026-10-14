@@ -19,7 +19,7 @@ LICENSE
 # Project guide
 README.md
 
-# Dokcer files
+# Docker files
 Dockerfile
 docker-compose*
 .dockerignore

@@ -1,6 +1,6 @@
 apiVersion: v2
 name: biblionx-translator-text-core
-description: Biblionx AI translation core module (adapted from VLibras architecture).
+description: Biblionx text translation core - AI module that translates written Spanish (Dominican Republic) into LSRD (Dominican Sign Language) glosses.
 maintainers:
   - name: Biblionx Team
 type: application
@@ -9,7 +9,6 @@ appVersion: "1.16.1"
 keywords:
   - biblionx
   - lsrd
-  - vlibras
   - backend
   - python
   - rabbitmq

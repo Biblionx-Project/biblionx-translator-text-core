@@ -1,3 +1,6 @@
+# Legacy GitLab CI pipeline inherited from the upstream project's infrastructure.
+# It is not used by Biblionx (hosted on GitHub); the included template project
+# and APP_URL below point to upstream infrastructure and are kept only for reference.
 workflow:
   rules:
     - if: '$CI_COMMIT_REF_NAME == "dev"'
@@ -12,7 +15,7 @@ variables:
 
 
 include:
-  # 🔹 Standard template for dev branches
+  # Standard template for dev branches
   - project: 'vlibras2019/DevOps'
     ref: main
     file: '/Default-App-Pipeline-VLibras.gitlab-ci.yml'
@@ -24,5 +27,5 @@ container-build:
     reports:
       dotenv: build*.env
     paths:
-      - build*.env  # ❌ removing oci-export*/ for testing
+      - build*.env  # oci-export*/ removed for testing
     expire_in: 1 hour
