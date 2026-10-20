@@ -1,4 +1,4 @@
-setuptools==82.0.1
+setuptools==83.0.0
 pika==1.4.1
 tenacity==9.1.4
 pydantic==2.13.4
